@@ -1,0 +1,115 @@
+-> Admin login
+{
+    "_id": "6760163a64082443ce08cf63",
+
+    "name":"manish",
+    "username":"manish",
+    "email":"manish@gmail.com",
+    "password":"Q1e2r3s4$",
+    "role": "admin",
+    "admin_id":"ABCDE12345"
+}
+
+-> check post officer
+{
+    "_id": "67601a1864082443ce08cf64",
+
+    "name":"ayesha",
+    "username":"ayesha",
+    "email":"ayesha@gmail.com",
+    "password":"Q1e2r3s4$",
+    "role": "check_post_officer",
+    "admin_id":"ABCDE12345"
+}
+
+-> check post
+{
+    "_id": "67601ac364082443ce08cf65",
+    
+    "name": "check post1",
+    "description": "Your Facility Description",
+    "location": "Your Facility Location",
+    "latitude": "12.9858",
+    "longitude": "77.7659",
+    "list_of_check_post_officer": [
+        "67601a1864082443ce08cf64"
+    ],
+    "check_post_admin_id": "ABCDE12345"
+    
+}
+
+
+
+asgiref==3.8.1
+bcrypt==4.1.3
+bson==0.5.10
+cachetools==5.3.3
+certifi==2024.6.2
+cffi==1.16.0
+charset-normalizer==3.3.2
+colorama==0.4.6
+contourpy==1.2.1
+cryptography==42.0.7
+cycler==0.12.1
+Django==5.0.6
+django-cors-headers==4.3.1
+djangorestframework==3.15.1
+djangorestframework-jwt==1.11.0
+filelock==3.16.1
+firebase-rest-api==1.11.0
+fonttools==4.53.0
+fsspec==2024.9.0
+google-api-core==2.19.0
+google-auth==2.29.0
+google-cloud-core==2.4.1
+google-cloud-firestore==2.16.0
+google-cloud-storage==2.16.0
+google-crc32c==1.5.0
+google-resumable-media==2.7.0
+googleapis-common-protos==1.63.0
+grpcio==1.64.0
+grpcio-status==1.62.2
+idna==3.7
+Jinja2==3.1.4
+jwcrypto==1.5.6
+kiwisolver==1.4.5
+MarkupSafe==3.0.1
+matplotlib==3.9.0
+mpmath==1.3.0
+networkx==3.4.1
+numpy==1.26.4
+opencv-python==4.10.0.82
+packaging==24.1
+pandas==2.2.3
+pillow==10.3.0
+pkce==1.0.3
+proto-plus==1.23.0
+protobuf==4.25.3
+psutil==6.0.0
+py-cpuinfo==9.0.0
+pyasn1==0.6.0
+pyasn1_modules==0.4.0
+pycparser==2.22
+PyJWT==1.7.1
+pyparsing==3.1.2
+python-dateutil==2.9.0.post0
+python-dotenv==1.0.1
+python-jwt==4.1.0
+pytz==2024.2
+PyYAML==6.0.2
+requests==2.32.3
+rsa==4.9
+scipy==1.14.1
+seaborn==0.13.2
+setuptools==75.1.0
+six==1.16.0
+sqlparse==0.5.0
+sympy==1.13.3
+torch==2.4.1
+torchvision==0.19.1
+tqdm==4.66.5
+typing_extensions==4.12.1
+tzdata==2024.2
+ultralytics==8.3.13
+ultralytics-thop==2.0.9
+urllib3==2.2.1
