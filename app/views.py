@@ -972,6 +972,7 @@ class woodlogs_count_check(APIView):
         longitude = request.data.get('longitude')
         vehicle_number = request.data.get('vehicle_number')
         check_post_officer_name = request.data.get('check_post_officer_name')
+        auto_detected_vehicle_number = request.data.get('auto_detected_vehicle_number', False)
 
         required_fields = {
             "check_post_id": check_post_id,
@@ -980,7 +981,8 @@ class woodlogs_count_check(APIView):
             "latitude": latitude,
             "longitude": longitude,
             "vehicle_number": vehicle_number,
-            "check_post_officer_name": check_post_officer_name
+            "check_post_officer_name": check_post_officer_name,
+            "auto_detected_vehicle_number": auto_detected_vehicle_number
         }
 
         # Find missing fields
@@ -1059,7 +1061,8 @@ class woodlogs_count_check(APIView):
             "check_post_officer_name" : check_post_officer_name,
             "approval_status": False,
             "vehicle_passed": False,
-            "vehicle_passed_time": ""
+            "vehicle_passed_time": "",
+            "auto_detected_vehicle_number": auto_detected_vehicle_number,
         }
         # print(name + 'nameeeee')
         try:
