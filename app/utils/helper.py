@@ -74,3 +74,76 @@ def check_the_post_under_required_lat_long(lat1, lon1, lat2, lon2):
 
     distance = R * c #into meters
     return distance < 5
+
+import cv2
+import pytesseract
+import os
+
+def process_vehicle_number_plate(image_path, output_dir="output"):
+    os.makedirs(output_dir, exist_ok=True)
+
+    image = cv2.imread(image_path)
+
+    if image is None:
+        return None, "Error: Could not load image. Check the file path."
+
+    cv2.imwrite(os.path.join(output_dir, "original_image.png"), image)
+
+    image = cv2.resize(image, None, fx=2, fy=2, interpolation=cv2.INTER_CUBIC)
+
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    gray = cv2.GaussianBlur(gray, (5, 5), 0)
+
+    cv2.imwrite(os.path.join(output_dir, "gray_image.png"), gray)
+
+    thresh = cv2.adaptiveThreshold(
+        gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2
+    )
+
+    cv2.imwrite(os.path.join(output_dir, "threshold_image.png"), thresh)
+
+    edges = cv2.Canny(thresh, 100, 200)
+    cv2.imwrite(os.path.join(output_dir, "edges.png"), edges)
+
+    contours, _ = cv2.findContours(edges, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+
+    number_plate_found = False
+    detected_number = None
+    for contour in contours:
+        approx = cv2.approxPolyDP(contour, 0.018 * cv2.arcLength(contour, True), True)
+        if len(approx) == 4:
+            x, y, w, h = cv2.boundingRect(approx)
+
+            if w < 50 or h < 20:
+                continue
+
+            roi = thresh[y:y+h, x:x+w]
+            roi_resized = cv2.resize(roi, (300, 100))
+
+            cv2.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 2)
+            cv2.imwrite(os.path.join(output_dir, "detected_rectangle.png"), image)
+            cv2.imwrite(os.path.join(output_dir, "roi.png"), roi)
+            cv2.imwrite(os.path.join(output_dir, "roi_resized.png"), roi_resized)
+
+            roi_cleaned = cv2.GaussianBlur(roi_resized, (3, 3), 0)
+            roi_inverted = cv2.bitwise_not(roi_cleaned)
+            cv2.imwrite(os.path.join(output_dir, "roi_cleaned.png"), roi_inverted)
+
+            text = pytesseract.image_to_string(
+                roi_inverted, config='--psm 8 -c tessedit_char_whitelist=ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+            )
+
+            detected_number = text.strip()
+            number_plate_found = True
+            break
+
+    if not number_plate_found:
+        return {
+            "success": False,
+            "message": "No number plate detected."
+        }
+    return {
+        "success": True,
+        "message": "Number plate detected successfully.",
+        "number": detected_number
+    }

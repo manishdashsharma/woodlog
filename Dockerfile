@@ -19,16 +19,25 @@ RUN apt-get update && apt-get install -y \
     libatlas-base-dev \
     gfortran \
     python3-dev \
+    # Added Tesseract and related dependencies
+    tesseract-ocr \
+    libtesseract-dev \
+    tesseract-ocr-eng \
+    libleptonica-dev \
+    cmake \
+    pkg-config \
+    libjpeg-dev \
+    libpng-dev \
+    libtiff-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Install OpenCV
-RUN pip install opencv-python
-
-# Copy the requirements file into the container
-COPY ./requirements.txt /usr/src/app/requirements.txt
-
 # Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+COPY ./requirements.txt /usr/src/app/requirements.txt
+RUN pip install --no-cache-dir \
+    opencv-python \
+    opencv-python-headless \
+    pytesseract \
+    -r requirements.txt
 
 # Copy the rest of the Django app code to the container
 COPY . /usr/src/app

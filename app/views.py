@@ -903,8 +903,12 @@ class woodlogs_count_check(APIView):
 
         if request_type == 'upload_woodlog_image':
             return self.upload_woodlog_image(request)
+        elif request_type == 'vehicle_number_check':
+            return self.vehicle_number_check(request)
+        
         elif request_type == 'search_woodlogs':
             return self.search_woodlogs(request)
+        
         else:
             return self.handle_error(request)
 
@@ -1078,8 +1082,41 @@ class woodlogs_count_check(APIView):
             "message": "Image uploaded and processed successfully",
             "response": woodlog_data
         }, status=status.HTTP_200_OK)
+    
+    def vehicle_number_check(self, request):
+        vehicle_number_plate = request.FILES.get('vehicle_number_plate')
 
+        if not vehicle_number_plate:
+            return Response({
+                "success": False,
+                "message": "No image file provided."
+            }, status=status.HTTP_400_BAD_REQUEST)
 
+        # Ensure the directory exists
+        os.makedirs(settings.VEHICLE_IMAGE_ROOT, exist_ok=True)
+
+        image_path = os.path.join(settings.VEHICLE_IMAGE_ROOT, vehicle_number_plate.name)
+        with open(image_path, 'wb') as f:
+            for chunk in vehicle_number_plate.chunks():
+                f.write(chunk)
+        
+        result = process_vehicle_number_plate(image_path)
+
+        if not result["success"]:
+            return Response({
+                "success": False,
+                "message": result["message"]
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        if os.path.exists(image_path):
+            os.remove(image_path)
+
+        return Response({
+            "success": True,
+            "message": "Vehicle number plate detected successfully",
+            "response": result["number"]
+        })
+    
     def handle_error(self, request): 
         return Response({
             "success": False,
