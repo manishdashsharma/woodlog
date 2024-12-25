@@ -908,6 +908,8 @@ class woodlogs_count_check(APIView):
         
         elif request_type == 'search_woodlogs':
             return self.search_woodlogs(request)
+        elif request_type == 'update_processed_image_count':
+            return self.update_processed_image_count(request)
         
         else:
             return self.handle_error(request)
@@ -965,7 +967,6 @@ class woodlogs_count_check(APIView):
             "message": f"Error retrieving woodlogs: {str(e)}"
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-            
     @login_required
     def upload_woodlog_image(self, request):
         check_post_id = request.data.get('check_post_id')
@@ -1117,6 +1118,80 @@ class woodlogs_count_check(APIView):
             "response": result["number"]
         })
     
+    # @login_required
+    def update_processed_image_count(self, request):
+        # Get required fields from request
+        check_post_id = request.data.get('check_post_id')
+        check_post_officer_id = request.data.get('check_post_officer_id')
+        image = request.FILES.get('image')
+        name = request.data.get('name')  
+        number_of_wood_logs = int(request.data.get('number_of_wood_logs'))
+
+        # Validate required fields
+        required_fields = {
+            "check_post_id": check_post_id,
+            "check_post_officer_id": check_post_officer_id,
+            "image": image,
+            "name": name,
+            "number_of_wood_logs": number_of_wood_logs
+        }
+
+        missing_fields = [field for field, value in required_fields.items() if value is None]
+
+        if missing_fields:
+            return Response({
+                "success": False,
+                "message": f"The following fields are required: {', '.join(missing_fields)}."
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            existing_data = database.child("woodlogs").child(name).child(check_post_officer_id).get().val()
+            
+            if not existing_data:
+                return Response({
+                    "success": False,
+                    "message": "No existing record found for this vehicle and officer"
+                }, status=status.HTTP_404_NOT_FOUND)
+
+            old_processed_url = existing_data.get('processed_image_url', '')
+            try:
+                timestamp = old_processed_url.split('_')[-2]  
+            except:
+                timestamp = int(time.time())
+
+            processed_file_name = f"{check_post_id}_{check_post_officer_id}_{timestamp}_processed.jpg"
+            processed_file_path = os.path.join(settings.MEDIA_ROOT, processed_file_name)
+
+            try:
+                processed_image_path = default_storage.save(processed_file_path, ContentFile(image.read()))
+            except Exception as e:
+                return Response({
+                    "success": False,
+                    "message": f"Error saving processed image: {str(e)}"
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+            processed_image_url = request.build_absolute_uri(settings.MEDIA_URL + processed_file_name)
+
+            update_data = {
+                "processed_image_url": processed_image_url,
+                "number_of_wood_logs": int(number_of_wood_logs),
+                "updated_at": datetime.utcnow().isoformat()
+            }
+
+            res = database.child("woodlogs").child(name).child(check_post_officer_id).update(update_data)
+
+            return Response({
+                "success": True,
+                "message": "Image and count updated successfully",
+                "response": res
+            }, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response({
+                "success": False,
+                "message": f"Error updating record: {str(e)}"
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
     def handle_error(self, request): 
         return Response({
             "success": False,
