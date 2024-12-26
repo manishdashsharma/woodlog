@@ -1127,6 +1127,8 @@ class woodlogs_count_check(APIView):
         name = request.data.get('name')  
         number_of_wood_logs = int(request.data.get('number_of_wood_logs'))
 
+        print("This is image",image)
+
         # Validate required fields
         required_fields = {
             "check_post_id": check_post_id,
@@ -1135,6 +1137,8 @@ class woodlogs_count_check(APIView):
             "name": name,
             "number_of_wood_logs": number_of_wood_logs
         }
+
+        print("required field",required_fields)
 
         missing_fields = [field for field, value in required_fields.items() if value is None]
 
@@ -1146,6 +1150,8 @@ class woodlogs_count_check(APIView):
 
         try:
             existing_data = database.child("woodlogs").child(name).child(check_post_officer_id).get().val()
+
+            print("existing data",existing_data)
             
             if not existing_data:
                 return Response({
@@ -1178,7 +1184,11 @@ class woodlogs_count_check(APIView):
                 "updated_at": datetime.utcnow().isoformat()
             }
 
+            print("update data", update_data)
+
             res = database.child("woodlogs").child(name).child(check_post_officer_id).update(update_data)
+
+            print("response after updating",res)
 
             return Response({
                 "success": True,
