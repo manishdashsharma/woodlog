@@ -1159,11 +1159,11 @@ class woodlogs_count_check(APIView):
                     "message": "No existing record found for this vehicle and officer"
                 }, status=status.HTTP_404_NOT_FOUND)
 
-            old_processed_url = existing_data.get('processed_image_url', '')
-            try:
-                timestamp = old_processed_url.split('_')[-2]  
-            except:
-                timestamp = int(time.time())
+            # old_processed_url = existing_data.get('processed_image_url', '')
+            # try:
+            #     timestamp = old_processed_url.split('_')[-2]  
+            # except:
+            timestamp = int(time.time())
 
             processed_file_name = f"{check_post_id}_{check_post_officer_id}_{timestamp}_processed.jpg"
             processed_file_path = os.path.join(settings.MEDIA_ROOT, processed_file_name)
