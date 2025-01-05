@@ -967,7 +967,7 @@ class woodlogs_count_check(APIView):
             "message": f"Error retrieving woodlogs: {str(e)}"
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    @login_required
+    # @login_required
     def upload_woodlog_image(self, request):
         check_post_id = request.data.get('check_post_id')
         check_post_officer_id = request.data.get('check_post_officer_id')
@@ -998,6 +998,8 @@ class woodlogs_count_check(APIView):
                 "success": False,
                 "message": f"The following fields are required: {', '.join(missing_fields)}."
             }, status=status.HTTP_400_BAD_REQUEST)
+        
+        print(image.size)
 
         if image.size > 100 * 1024 * 1024:  # Limit to 10MB
             return Response({
@@ -1097,6 +1099,8 @@ class woodlogs_count_check(APIView):
                 "success": False,
                 "message": "No image file provided."
             }, status=status.HTTP_400_BAD_REQUEST)
+        
+        print(vehicle_number_plate.size)
         
         if vehicle_number_plate.size > 100 * 1024 * 1024:  # Limit to 10MB
             return Response({

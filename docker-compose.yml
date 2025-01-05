@@ -10,6 +10,10 @@ services:
     restart: always
     env_file: 
       - ./.env
+    environment:
+      - UWSGI_READ_TIMEOUT=600
+      - UWSGI_SEND_TIMEOUT=600
+      - DJANGO_SETTINGS_MODULE=core.settings
     networks:
       - queue-net
 
