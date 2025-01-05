@@ -999,6 +999,11 @@ class woodlogs_count_check(APIView):
                 "message": f"The following fields are required: {', '.join(missing_fields)}."
             }, status=status.HTTP_400_BAD_REQUEST)
 
+        if image.size > 100 * 1024 * 1024:  # Limit to 10MB
+            return Response({
+                "success": False,
+                "message": "File size exceeds 10MB limit."
+            }, status=status.HTTP_400_BAD_REQUEST)
        
         timestamp = int(time.time()) 
         original_file_name = f"{check_post_id}_{check_post_officer_id}_{timestamp}_original.jpg"
@@ -1092,15 +1097,27 @@ class woodlogs_count_check(APIView):
                 "success": False,
                 "message": "No image file provided."
             }, status=status.HTTP_400_BAD_REQUEST)
+        
+        if vehicle_number_plate.size > 100 * 1024 * 1024:  # Limit to 10MB
+            return Response({
+                "success": False,
+                "message": "File size exceeds 10MB limit."
+            }, status=status.HTTP_400_BAD_REQUEST)
 
         # Ensure the directory exists
         os.makedirs(settings.VEHICLE_IMAGE_ROOT, exist_ok=True)
 
         image_path = os.path.join(settings.VEHICLE_IMAGE_ROOT, vehicle_number_plate.name)
-        with open(image_path, 'wb') as f:
-            for chunk in vehicle_number_plate.chunks():
-                f.write(chunk)
-        
+        # with open(image_path, 'wb') as f:
+        #     for chunk in vehicle_number_plate.chunks():
+        #         f.write(chunk)
+        try:
+            with open(image_path, 'wb') as f:
+                for chunk in vehicle_number_plate.chunks():
+                    f.write(chunk)
+        except Exception as e:
+            return Response({"success": False, "message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
         result = process_vehicle_number_plate(image_path)
 
         if not result["success"]:
