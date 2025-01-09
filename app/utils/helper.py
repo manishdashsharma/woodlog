@@ -5,6 +5,8 @@ import cv2
 import numpy as np 
 import matplotlib.pyplot as plt 
 from math import radians, cos, sin, sqrt, atan2
+import easyocr
+
 
 class JWTUtils:
     def __init__(self):
@@ -147,3 +149,14 @@ def process_vehicle_number_plate(image_path, output_dir="output"):
         "message": "Number plate detected successfully.",
         "number": detected_number
     }
+
+
+def numberPlate(imagePath):
+    try:
+        reader = easyocr.Reader(['en'])  
+        result = reader.readtext(imagePath)
+        plate_text = " ".join([res[1] for res in result])
+        return {"success": True, "message": "", "data": plate_text}
+    
+    except Exception as e:
+        return {"success": False, "message": f"Error reading number plate: {e}", "data": ""}

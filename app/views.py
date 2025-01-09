@@ -1123,7 +1123,7 @@ class woodlogs_count_check(APIView):
         except Exception as e:
             return Response({"success": False, "message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        result = process_vehicle_number_plate(image_path)
+        result = numberPlate(image_path)
 
         if not result["success"]:
             return Response({
@@ -1137,7 +1137,7 @@ class woodlogs_count_check(APIView):
         return Response({
             "success": True,
             "message": "Vehicle number plate detected successfully",
-            "response": result["number"]
+            "response": result["data"]
         })
     
     # @login_required
