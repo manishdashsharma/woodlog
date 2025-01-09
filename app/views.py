@@ -14,6 +14,7 @@ from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
 from django.conf import settings
 import os
+from collections import defaultdict
 
 # For model
 
@@ -1223,6 +1224,121 @@ class woodlogs_count_check(APIView):
                 "message": f"Error updating record: {str(e)}"
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
+    def handle_error(self, request): 
+        return Response({
+            "success": False,
+            "message": "Invalid request type"
+        }, status=status.HTTP_400_BAD_REQUEST)
+    
+@method_decorator(csrf_exempt, name='dispatch')
+class report_stats(APIView):
+    def post(self, request):
+        request_type = request.GET.get('type')
+
+        if request_type == 'admin_report':
+            return self.admin_report(request)
+        elif request_type == 'detailed_report':
+            return self.detailed_report(request)
+        else:
+            return self.handle_error(request)
+    
+    def admin_report(self, request):
+        admin_id = request.data.get('admin_id')
+        days = request.data.get('days', 7)
+
+        end_date = datetime.now()
+        start_date = end_date - timedelta(days=days)
+
+        check_posts = []
+        woodlogs = []
+        check_post_officers = set()
+
+        checkposts = database.child("checkpost").get().val()  # Fetching checkposts
+
+        # Iterate over checkposts and filter based on admin_id and created_at date
+        for check_post_key, check_post_data in checkposts.items():
+            if check_post_data["check_post_admin_id"] == admin_id:
+                created_at = datetime.fromisoformat(check_post_data['created_at'])
+                if start_date <= created_at <= end_date:
+                    check_posts.append(check_post_data)
+                    check_post_officers.update(check_post_data['list_of_check_post_officer'])
+                    
+                    woodlogs_data = database.child("woodlogs").get().val()  # Fetching woodlogs
+                    for vehicle_key, vehicle_data in woodlogs_data.items():
+                        for officer_id, woodlog_data in vehicle_data.items():
+                            if woodlog_data["check_post_id"] == check_post_data["_id"]:
+                                created_at = datetime.fromisoformat(woodlog_data['created_at'])
+                                if start_date <= created_at <= end_date:
+                                    woodlogs.append(woodlog_data)
+
+        total_check_posts = len(check_posts)
+        total_check_post_officers = len(check_post_officers)
+        total_woodlogs = len(woodlogs)
+        
+        woodlogs_per_check_post = {}
+        for post in check_posts:
+            woodlogs_per_check_post[post['name']] = sum(
+                1 for log in woodlogs if log['check_post_id'] == post['_id']
+            )
+        
+        vehicles_passed = sum(1 for log in woodlogs if log['vehicle_passed'])
+        approved_logs = sum(1 for log in woodlogs if log['approval_status'])
+        
+        return Response({
+            "success": True,
+            "message": "Admin report generated successfully",
+            "response": {
+                "total_check_posts": total_check_posts,
+                "total_check_post_officers": total_check_post_officers,
+                "total_woodlogs": total_woodlogs,
+                "woodlogs_per_check_post": woodlogs_per_check_post,
+                "total_vehicles_passed": vehicles_passed,
+                "approved_logs": approved_logs,
+                "location_details": [
+                    {"check_post": post['name'], "location": post['location']}
+                    for post in check_posts
+                ]
+            }
+        })
+
+    def detailed_report(self, request):
+        check_post_id = request.data.get('check_post_id')  
+        days = request.data.get('days', 7) 
+        
+        end_date = datetime.now()
+        start_date = end_date - timedelta(days=days)
+
+        daily_woodlogs = defaultdict(int)
+        daily_vehicles_passed = defaultdict(int)
+
+        woodlogs_data = database.child("woodlogs").get().val()  
+        for vehicle_key, vehicle_data in woodlogs_data.items():
+            for officer_id, woodlog_data in vehicle_data.items():
+                if woodlog_data["check_post_id"] == check_post_id:
+                    created_at = datetime.fromisoformat(woodlog_data['created_at'])
+                    if start_date <= created_at <= end_date:
+                        day = created_at.date()
+                        daily_woodlogs[day] += woodlog_data.get('number_of_wood_logs', 0)
+                        if woodlog_data.get('vehicle_passed', False):
+                            daily_vehicles_passed[day] += 1
+
+        result_data = []
+        current_date = start_date.date()
+        while current_date <= end_date.date():
+            result_data.append({
+                "date": current_date,
+                "woodlogs": daily_woodlogs.get(current_date, 0),
+                "vehicles_passed": daily_vehicles_passed.get(current_date, 0)
+            })
+            current_date += timedelta(days=1)
+
+        return Response({
+            "success": True,
+            "message": "Detailed report generated successfully",
+            "response": result_data
+        })
+
+
     def handle_error(self, request): 
         return Response({
             "success": False,
